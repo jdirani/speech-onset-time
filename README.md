@@ -1,2 +1,4 @@
 # voice_utterance_time
-signal processing: get utterance times
+Work in progress...
+set of functions to record voice and get utterance times.
+
