@@ -147,7 +147,5 @@ def plot_utterance_times(dir_in, dir_out):
 
         plt.plot(signal, color='b')
         plt.axvline(idx, color='r')
-        plt.savefig(dir_out + v[:-4] + '.jpg')
+        plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
         plt.close()
-
-
