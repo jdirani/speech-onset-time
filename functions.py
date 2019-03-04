@@ -14,7 +14,7 @@ import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
 from matplotlib import pyplot as plt
-import numpy
+import numpy,os
 from scipy.signal import butter, filtfilt
 import matplotlib.pyplot as plt
 
@@ -115,3 +115,39 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
     B, A = butter(1, cutoff / (fs / 2.0), btype='low')
     filtered_signal = filtfilt(B, A, signal_in, axis=0)
     return filtered_signal
+
+
+def get_utterance_times(dir_in, file_out):
+
+    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
+    rts_out = []
+
+    for v in voices:
+        signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
+        flt_signal = FilterSignal(signal)
+        env = get_envelope(flt_signal)
+        idx, rt = get_voice_onset(env)
+        rts_out.append(rt)
+
+    f = open(file_out,'w')
+    for r in rts_out:
+        f.write('%s\n'%r)
+    f.close()
+
+
+def plot_utterance_times(dir_in, dir_out):
+    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
+    rts_out = []
+
+    for v in voices:
+        signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
+        flt_signal = FilterSignal(signal)
+        env = get_envelope(flt_signal)
+        idx, rt = get_voice_onset(env)
+
+        plt.plot(signal, color='b')
+        plt.axvline(idx, color='r')
+        plt.savefig(dir_out + v[:-4] + '.jpg')
+        plt.close()
+
+
