@@ -110,7 +110,7 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
 
     fs: sampling frequency
 
-    cutoff: LPF cutoff, the smaller the cuttoff the stronger the filter.
+    cutoff: LPF cutoff. 200 works well with MEG mic
     '''
     B, A = butter(1, cutoff / (fs / 2.0), btype='low')
     filtered_signal = filtfilt(B, A, signal_in, axis=0)
