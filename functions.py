@@ -145,7 +145,8 @@ def plot_utterance_times(dir_in, dir_out):
         env = get_envelope(flt_signal)
         idx, rt = get_voice_onset(env)
 
-        plt.plot(signal, color='b')
-        plt.axvline(idx, color='r')
+        fig, ax = plt.subplots(figsize=((18,5)))
+        ax.plot(signal, color='b')
+        ax.axvline(idx, color='r')
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
         plt.close()
