@@ -176,7 +176,10 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     rts_out = []
 
+    nb = 0 #keep count
     for v in voices:
+        nb+=1
+        print '#%s'%nb, v
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
@@ -196,11 +199,12 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         # print "manual_rts (%s)"%len(manual_rts), manual_rts
 
         if len(manual_rts) > 0:
-            rt = manual_rts[-1]
+            rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds
         else:
-            rt = rt_auto * 1000 #convert to milliseconds
+            rt = rt_auto
 
-        print rt
+        print 'final rt ', rt
+        print '--------------------'
         rts_out.append(rt)
 
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
@@ -228,7 +232,10 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     trials_rts = []
 
+    nb = 0 #keep count
     for v in voices:
+        nb+=1
+        print '#%s'%nb, v
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
@@ -248,10 +255,12 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         # print "manual_rts (%s)"%len(manual_rts), manual_rts
 
         if len(manual_rts) > 0:
-            rt = manual_rts[-1]
+            rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds
         else:
-            rt = rt_auto * 1000 #convert to milliseconds
+            rt = rt_auto #convert to milliseconds
 
+        print 'final rt ', rt
+        print '--------------------'
 
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
         plt.close()
