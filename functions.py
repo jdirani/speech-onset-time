@@ -117,8 +117,10 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
     return filtered_signal
 
 
-def get_utterance_times(dir_in, file_out):
-
+def auto_utterance_times(dir_in, file_out):
+    '''
+    Automatically get utterance times. Output results to file.
+    '''
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     rts_out = []
 
@@ -135,7 +137,10 @@ def get_utterance_times(dir_in, file_out):
     f.close()
 
 
-def plot_utterance_times(dir_in, dir_out):
+def plot_auto_utterance_times(dir_in, dir_out):
+    '''
+    Plot automatically generated utterance times.
+    '''
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
 
     for v in voices:
@@ -149,3 +154,54 @@ def plot_utterance_times(dir_in, dir_out):
         ax.axvline(idx, color='r')
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
         plt.close()
+
+
+
+#-- Below is still work in progress
+# later: add output to csv the final RTs with a column for trial info
+def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
+    plt.ion()
+    def onpick(event):
+        if event.dblclick:
+            manual_rts.append((event.xdata, event.xdata/fs)) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
+            L =  ax.axvline(x=event.xdata, color='orange')
+            fig.canvas.draw()
+        elif event.button == 3:
+            plt.close()
+            fig.canvas.mpl_disconnect(cid)
+            return
+
+    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
+    rts_out = []
+
+    for v in voices:
+        # auto fetch RT
+        signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
+        flt_signal = FilterSignal(signal)
+        env = get_envelope(flt_signal)
+        rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
+        print "rt auto ", rt_auto
+
+        # plot and fix rt
+        manual_rts = [] # DEFINED HERE manual_rts
+        fig, ax = plt.subplots(figsize=((18,5)))
+        ax.plot(signal, color='b')
+        ax.axvline(rt_auto[0], color='r')
+        cid = fig.canvas.mpl_connect('button_press_event', onpick)
+        raw_input('press enter to continue...') #pauses to wait for cid to finish
+
+        # print "rt manual ", rt_manual
+        # print "manual_rts (%s)"%len(manual_rts), manual_rts
+
+        if len(manual_rts) > 0:
+            rt = manual_rts[-1]
+        else:
+            rt = rt_auto
+
+        print rt
+        rts_out.append(rt)
+
+        plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
+        plt.close()
+
+    return rts_out
