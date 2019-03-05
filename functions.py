@@ -137,7 +137,6 @@ def get_utterance_times(dir_in, file_out):
 
 def plot_utterance_times(dir_in, dir_out):
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
-    rts_out = []
 
     for v in voices:
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
