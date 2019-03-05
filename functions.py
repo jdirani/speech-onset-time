@@ -158,8 +158,10 @@ def plot_auto_utterance_times(dir_in, dir_out):
 
 
 #-- Below is still work in progress
-# later: add output to csv the final RTs with a column for trial info
 def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
+    '''
+    Returns list of RTs and saves plots to dir_out.
+    '''
     plt.ion()
     def onpick(event):
         if event.dblclick:
@@ -209,6 +211,9 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
 
 # Returns a dict with trialnum, target, and rt
 def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
+    '''
+    Returns list of RTs and csv with RTs and trial info, and saves plots to dir_out.
+    '''
     plt.ion()
     def onpick(event):
         if event.dblclick:
@@ -254,6 +259,11 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         trialnum = v.split('_')[0]
         target = v.split('_')[1][:-4]
         trials_rts.append({'target':target,'trialnum':trialnum,'rt':rt[1]})
+
+        with open(dir_out + '/RT_out.csv', 'w') as f:
+            w = csv.DictWriter(f, fieldnames=['trialnum', 'target','rt'])
+            w.writeheader()
+            w.writerows(trials_rts)
 
 
     return trials_rts
