@@ -198,7 +198,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         if len(manual_rts) > 0:
             rt = manual_rts[-1]
         else:
-            rt = rt_auto
+            rt = rt_auto * 1000 #convert to milliseconds
 
         print rt
         rts_out.append(rt)
@@ -250,7 +250,7 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         if len(manual_rts) > 0:
             rt = manual_rts[-1]
         else:
-            rt = rt_auto
+            rt = rt_auto * 1000 #convert to milliseconds
 
 
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
