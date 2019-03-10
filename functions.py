@@ -202,7 +202,8 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
         ax.plot(X_axis, signal, color='b')
-        ax.axvline(rt_auto[1], color='r')
+        if rt_auto:
+            ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
         raw_input('press enter to continue...') #pauses to wait for cid to finish
 
@@ -263,7 +264,8 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
         ax.plot(X_axis, signal, color='b')
-        ax.axvline(rt_auto[1], color='r')
+        if rt_auto:
+            ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
         raw_input('press enter to continue...') #pauses to wait for cid to finish
 
