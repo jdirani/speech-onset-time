@@ -14,7 +14,7 @@ import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
 from matplotlib import pyplot as plt
-import numpy,os
+import numpy,os, csv
 from scipy.signal import butter, filtfilt
 import matplotlib.pyplot as plt
 
@@ -262,15 +262,19 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         print 'final rt ', rt
         print '--------------------'
 
-        plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
+
+        if not os.path.isdir(os.path.join(dir_out, 'rts')):
+            os.makedirs(os.path.join(dir_out, 'rts'))
+
+        plt.savefig(os.path.join(dir_out,'rts', (v[:-4]+'.jpg')))
         plt.close()
 
         trialnum = v.split('_')[0]
         target = v.split('_')[1][:-4]
-        trials_rts.append({'target':target,'trialnum':trialnum,'rt':rt[1]})
+        trials_rts.append({'target':target,'trialID':trialnum,'rt':rt[1]})
 
-        with open(dir_out + '/RT_out.csv', 'w') as f:
-            w = csv.DictWriter(f, fieldnames=['trialnum', 'target','rt'])
+        with open(os.path.join(dir_out,'rts','RT_out.csv'), 'w') as f:
+            w = csv.DictWriter(f, fieldnames=['trialID', 'target','rt'])
             w.writeheader()
             w.writerows(trials_rts)
 
