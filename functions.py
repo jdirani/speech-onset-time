@@ -137,7 +137,8 @@ def auto_utterance_times(dir_in, file_out):
     f.close()
 
 
-def plot_auto_utterance_times(dir_in, dir_out):
+
+def plot_auto_utterance_times(dir_in, dir_out, fs=44100):
     '''
     Plot automatically generated utterance times.
     '''
@@ -149,15 +150,20 @@ def plot_auto_utterance_times(dir_in, dir_out):
         env = get_envelope(flt_signal)
         idx, rt = get_voice_onset(env)
 
+        # Creating X axis, in miliiseconds
+        N_samples = len(signal)
+        len_signal_ms = len(signal)/fs*1000
+        X_axis = np.arange(0,len_signal_ms,1.0/fs*1000)
+
+        #plotting
         fig, ax = plt.subplots(figsize=((18,5)))
-        ax.plot(signal, color='b')
-        ax.axvline(idx, color='r')
+        ax.plot(X_axis, signal, color='b')
+        ax.axvline(rt, color='r')
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
         plt.close()
 
 
 
-#-- Below is still work in progress
 def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     '''
     Returns list of RTs and saves plots to dir_out.
@@ -187,11 +193,16 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
         print "rt auto ", rt_auto
 
+        # Creating X axis, in miliiseconds
+        N_samples = len(signal)
+        len_signal_ms = len(signal)/fs*1000
+        X_axis = np.arange(0,len_signal_ms,1.0/fs*1000)
+
         # plot and fix rt
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
-        ax.plot(signal, color='b')
-        ax.axvline(rt_auto[0], color='r')
+        ax.plot(X_axis, signal, color='b')
+        ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
         raw_input('press enter to continue...') #pauses to wait for cid to finish
 
@@ -243,11 +254,16 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
         print "rt auto ", rt_auto
 
+        # Creating X axis, in miliiseconds
+        N_samples = len(signal)
+        len_signal_ms = len(signal)/fs*1000
+        X_axis = np.arange(0,len_signal_ms,1.0/fs*1000)
+
         # plot and fix rt
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
         ax.plot(signal, color='b')
-        ax.axvline(rt_auto[0], color='r')
+        ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
         raw_input('press enter to continue...') #pauses to wait for cid to finish
 
