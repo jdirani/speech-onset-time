@@ -164,6 +164,7 @@ def plot_auto_utterance_times(dir_in, dir_out, fs=44100):
 
 
 
+# Below function needs testing.
 def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     '''
     Returns list of RTs and saves plots to dir_out.
@@ -171,7 +172,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     plt.ion()
     def onpick(event):
         if event.dblclick:
-            manual_rts.append((event.xdata, event.xdata/fs)) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
+            manual_rts.append(event.xdata) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
             L =  ax.axvline(x=event.xdata, color='orange')
             fig.canvas.draw()
         elif event.button == 3:
@@ -201,6 +202,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         # plot and fix rt
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
+        plt.title(v)
         ax.plot(X_axis, signal, color='b')
         if rt_auto:
             ax.axvline(rt_auto[1], color='r')
@@ -211,9 +213,10 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         # print "manual_rts (%s)"%len(manual_rts), manual_rts
 
         if len(manual_rts) > 0:
-            rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds
+            # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
+            rt = manual_rts[-1]
         else:
-            rt = rt_auto
+            rt = rt_auto[1] #convert to milliseconds
 
         print 'final rt ', rt
         print '--------------------'
@@ -225,6 +228,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     return rts_out
 
 
+
 # Returns a dict with trialnum, target, and rt
 def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     '''
@@ -233,7 +237,8 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     plt.ion()
     def onpick(event):
         if event.dblclick:
-            manual_rts.append((event.xdata, event.xdata/fs)) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
+            # manual_rts.append((event.xdata, event.xdata/fs)) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
+            manual_rts.append(event.xdata) # removing index value (see above), since now index is the final milliseconds value.
             L =  ax.axvline(x=event.xdata, color='orange')
             fig.canvas.draw()
         elif event.button == 3:
@@ -263,6 +268,7 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         # plot and fix rt
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
+        plt.title(v)
         ax.plot(X_axis, signal, color='b')
         if rt_auto:
             ax.axvline(rt_auto[1], color='r')
@@ -273,9 +279,10 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         # print "manual_rts (%s)"%len(manual_rts), manual_rts
 
         if len(manual_rts) > 0:
-            rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds
+            # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
+            rt = manual_rts[-1]
         else:
-            rt = rt_auto #convert to milliseconds
+            rt = rt_auto[1] #convert to milliseconds
 
         print 'final rt ', rt
         print '--------------------'
@@ -289,7 +296,7 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
 
         trialnum = v.split('_')[0]
         target = v.split('_')[1][:-4]
-        trials_rts.append({'target':target,'trialID':trialnum,'rt':rt[1]})
+        trials_rts.append({'target':target,'trialID':trialnum,'rt':rt})
 
         with open(os.path.join(dir_out,'rts','RT_out.csv'), 'w') as f:
             w = csv.DictWriter(f, fieldnames=['trialID', 'target','rt'])
