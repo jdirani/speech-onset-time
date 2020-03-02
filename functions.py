@@ -186,13 +186,13 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
     nb = 0 #keep count
     for v in voices:
         nb+=1
-        print '#%s'%nb, v
+        print('#%s'%nb, v)
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
         env = get_envelope(flt_signal)
         rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
-        print "rt auto ", rt_auto
+        print("rt auto ", rt_auto)
 
         # Creating X axis, in miliiseconds
         N_samples = len(signal)
@@ -207,10 +207,10 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         if rt_auto:
             ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
-        raw_input('press enter to continue...') #pauses to wait for cid to finish
+        input('press enter to continue...') #pauses to wait for cid to finish
 
-        # print "rt manual ", rt_manual
-        # print "manual_rts (%s)"%len(manual_rts), manual_rts
+        # print("rt manual ", rt_manual)
+        # print("manual_rts (%s)"%len(manual_rts), manual_rts)
 
         if len(manual_rts) > 0:
             # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
@@ -218,8 +218,8 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         else:
             rt = rt_auto[1] #convert to milliseconds
 
-        print 'final rt ', rt
-        print '--------------------'
+        print('final rt ', rt)
+        print('--------------------')
         rts_out.append(rt)
 
         plt.savefig(os.path.join(dir_out + '/' + v[:-4] + '.jpg'))
@@ -229,7 +229,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
 
 
 
-# Returns a dict with trialnum, target, and rt
+# Returns a dict with trialID (defined in .wav filename), target, and rt
 def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     '''
     Returns list of RTs and csv with RTs and trial info, and saves plots to dir_out.
@@ -252,13 +252,13 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     nb = 0 #keep count
     for v in voices:
         nb+=1
-        print '#%s'%nb, v
+        print('#%s'%nb, v)
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
         env = get_envelope(flt_signal)
         rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
-        print "rt auto ", rt_auto
+        print("rt auto ", rt_auto)
 
         # Creating X axis, in miliiseconds
         N_samples = len(signal)
@@ -273,10 +273,10 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         if rt_auto:
             ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
-        raw_input('press enter to continue...') #pauses to wait for cid to finish
+        input('press enter to continue...') #pauses to wait for cid to finish
 
-        # print "rt manual ", rt_manual
-        # print "manual_rts (%s)"%len(manual_rts), manual_rts
+        # print("rt manual ", rt_manual)
+        # print("manual_rts (%s)"%len(manual_rts), manual_rts)
 
         if len(manual_rts) > 0:
             # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
@@ -284,8 +284,8 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         else:
             rt = rt_auto[1] #convert to milliseconds
 
-        print 'final rt ', rt
-        print '--------------------'
+        print('final rt ', rt)
+        print('--------------------')
 
 
         if not os.path.isdir(os.path.join(dir_out, 'rts')):
