@@ -229,7 +229,7 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
 
 
 
-# Returns a dict with trialID (defined in .wav filename), target, and rt
+# Returns a dict with trialID (defined in .wav filename: trialID_trialName.wav. e.g. 1_banana.wav), target, and rt
 def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
     '''
     Returns list of RTs and csv with RTs and trial info, and saves plots to dir_out.
@@ -294,9 +294,9 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         plt.savefig(os.path.join(dir_out,'rts', (v[:-4]+'.jpg')))
         plt.close()
 
-        trialnum = v.split('_')[0]
+        trialID = v.split('_')[0]
         target = v.split('_')[1][:-4]
-        trials_rts.append({'target':target,'trialID':trialnum,'rt':rt})
+        trials_rts.append({'target':target,'trialID':trialID,'rt':rt})
 
         with open(os.path.join(dir_out,'rts','RT_out.csv'), 'w') as f:
             w = csv.DictWriter(f, fieldnames=['trialID', 'target','rt'])
