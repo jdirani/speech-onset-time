@@ -135,6 +135,7 @@ def auto_utterance_times(dir_in, file_out):
     for r in rts_out:
         f.write('%s\n'%r)
     f.close()
+    return rts_out
 
 
 
