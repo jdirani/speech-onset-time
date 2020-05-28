@@ -4,8 +4,8 @@
 # To detect utterance time (see EXAMPLE):
         # 1) Read the wav using wav.read()
         # 2) optionally LPF the wavs using FilterSignal()
-        # 3) get_envelope()
-        # 4) get_voice_onset()
+        # 3) _get_envelope()
+        # 4) _get_voice_onset()
 
         # NOTE: step (3) contains an LPF which is applied to the envelope. It
         # is not applied to the signal, so not a duplicate of step (2)
@@ -43,7 +43,7 @@ def record_voice(out_name=None, channels=1, fs=44100, duration=2, dtype='float64
 
 
 #--- Based on Jarne (2017) "Simple empirical algorithm to obtain signal envelope in three steps"
-def get_envelope(signal, fs=44100, N=200, cutoff=2000):
+def _get_envelope(signal, fs=44100, N=200, cutoff=2000):
     '''
     signal: input wav (numpy.ndarray)
 
@@ -62,7 +62,8 @@ def get_envelope(signal, fs=44100, N=200, cutoff=2000):
         max_value = np.max(chunk)
         new_chunk = [max_value for i in range(len(chunk))]
         new_signal.append(new_chunk)
-    new_signal = np.array(new_signal).flatten()
+    # new_signal = np.array(new_signal).flatten()
+    new_signal = np.array([item for sublist in new_signal for item in sublist]) # flatten list of lists
     # 3) LPF the new_signal (the envelope, not the original signal)
     def FilterSignal(signal_in, fs, cutoff):
         B, A = butter(1, cutoff / (fs / 2.0), btype='low')
@@ -76,17 +77,22 @@ def get_envelope(signal, fs=44100, N=200, cutoff=2000):
 
 
 # Note The threshold depends also on the input volume set on the computer
-def get_voice_onset(signal, threshold = 200, fs=44100, n_above=441):
+def _get_voice_onset(signal, threshold = 200, fs=44100, n_above=441):
     '''
-    signal: signal in = the envelope (numpy.ndarray)
+    signal : numpy.ndarray
+             signal in. Should be the envelope of the raw signal for accurate results
 
-    threshold : amplitude threshold for voice onset. threshold = 200 with MEG mic at 75% input volume seems to work well.
+    threshold : int
+                Amplitude threshold for voice onset.
+                (Threshold = 200 with NYUAD MEG mic at 75% input volume seems to work well)
 
-    fs: sampling frequency
+    fs : int
+         Sampling frequency
 
-    n_above: number of samples after the threshold is crossed used to calculate
-             the median amplitude and decide if it was random burst of noise
-            or speech onset.
+    n_above : int
+              Number of samples after the threshold is crossed used to calculate
+              the median amplitude and decide if it was random burst of noise
+              or speech onset.
     '''
     indices_onset = np.where(signal >= threshold)[0] # All indices above threshold
     # Next, find the first index that where the MEDIAN stays above threshold for the next 10ms
@@ -101,42 +107,79 @@ def get_voice_onset(signal, threshold = 200, fs=44100, n_above=441):
             onset_time = idx_onset / float(fs) * 1000.0
 
             return idx_onset, onset_time
+    return "None", "None" # if no point exceeds the threshold.
+                          # Return "None" instead of None in order to be able to append it to a list later on
 
 
 
-# LPF function: used in get_envelope() but here for seperate use.
+# LPF function: used in _get_envelope() but here for seperate use.
 def FilterSignal(signal_in, fs=44100, cutoff=200):
     '''
-    signal_in: input wav (numpy.ndarray)
+    signal_in : numpy.ndarray
+                Input .wav signal
 
-    fs: sampling frequency
+    fs : int
+         Sampling frequency
 
-    cutoff: LPF cutoff. 200 works well with MEG mic
+    cutoff : int
+             LPF cutoff (200 works well with NYUAD MEG mic)
     '''
     B, A = butter(1, cutoff / (fs / 2.0), btype='low')
     filtered_signal = filtfilt(B, A, signal_in, axis=0)
     return filtered_signal
 
 
-def auto_utterance_times(dir_in, file_out):
+def auto_utterance_times(file_in):
     '''
-    Automatically get utterance times. Output results to file.
+    Automatically get utterance times.
+    Returns idx and rt (ms)
     '''
+    fs, signal = wav.read(file_in)
+    flt_signal = FilterSignal(signal,fs=fs)
+    env = _get_envelope(flt_signal,fs=fs)
+    idx, rt = _get_voice_onset(env,fs=fs)
+
+    return idx, rt
+
+
+
+def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None):
+    '''
+    Automatically get utterance times. Returns list of indices and rts (ms).
+    Option to output results to file.
+
+    dir_in : str
+            Directory containing .wav files
+
+    output_txt : bool, optional
+                 Whether to output results to txt file
+
+    file_out : str
+               Path to txt file output
+
+    '''
+    if (output_txt == True) & (file_out==None):
+        raise TypeError('file_out must be specified (str) if output_txt=True')
+
+
     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     rts_out = []
+    idx_out = []
 
     for v in voices:
-        signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
-        flt_signal = FilterSignal(signal)
-        env = get_envelope(flt_signal)
-        idx, rt = get_voice_onset(env)
+        fs, signal = wav.read(os.path.join(dir_in + '/'+ v))
+        flt_signal = FilterSignal(signal,fs=fs)
+        env = _get_envelope(flt_signal,fs=fs)
+        idx, rt = _get_voice_onset(env,fs=fs)
         rts_out.append(rt)
+        idx_out.append(idx)
 
-    f = open(file_out,'w')
-    for r in rts_out:
-        f.write('%s\n'%r)
-    f.close()
-    return rts_out
+    if output_txt == True:
+        f = open(file_out,'w')
+        for r in rts_out:
+            f.write('%s\n'%r)
+        f.close()
+    return idx_out, rts_out
 
 
 
@@ -149,8 +192,8 @@ def plot_auto_utterance_times(dir_in, dir_out, fs=44100):
     for v in voices:
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
-        env = get_envelope(flt_signal)
-        idx, rt = get_voice_onset(env)
+        env = _get_envelope(flt_signal)
+        idx, rt = _get_voice_onset(env)
 
         # Creating X axis, in miliiseconds
         N_samples = len(signal)
@@ -192,8 +235,8 @@ def semi_auto_utterance_times(dir_in, dir_out, fs=44100):
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
-        env = get_envelope(flt_signal)
-        rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
+        env = _get_envelope(flt_signal)
+        rt_auto = _get_voice_onset(env) #rt_auto (idx,rt)
         print("rt auto ", rt_auto)
 
         # Creating X axis, in miliiseconds
@@ -258,8 +301,8 @@ def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
         # auto fetch RT
         signal = wav.read(os.path.join(dir_in + '/'+ v))[1]
         flt_signal = FilterSignal(signal)
-        env = get_envelope(flt_signal)
-        rt_auto = get_voice_onset(env) #rt_auto (idx,rt)
+        env = _get_envelope(flt_signal)
+        rt_auto = _get_voice_onset(env) #rt_auto (idx,rt)
         print("rt auto ", rt_auto)
 
         # Creating X axis, in miliiseconds
