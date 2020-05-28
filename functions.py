@@ -1,3 +1,4 @@
+# updating for py3...
 # Contains various signal processing functions
 
 # To detect utterance time (see EXAMPLE):
