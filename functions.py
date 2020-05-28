@@ -23,15 +23,17 @@ import matplotlib.pyplot as plt
 
 def record_voice(out_name=None, channels=1, fs=44100, duration=2, dtype='float64'):
     '''
-    out_name: if not None, writes to file.
+    out_name : str (directory)
+               If not None, writes to file.
 
     channels: 1 for mono, 2 for stereo
 
-    duration: in seconds
+    duration : In seconds
 
-    dtype: 'int16' for 16 bit, float64 for 32 bit rate.
+    dtype : 'int16' for 16 bit, float64 for 32 bit rate.
 
-    fs: sampling frequency
+    fs : int
+         Sampling frequency
     '''
     myrecording = sd.rec(duration * fs, samplerate=fs, channels=channels,dtype=dtype)
     sd.wait()
@@ -77,7 +79,7 @@ def _get_envelope(signal, fs=44100, N=200, cutoff=2000):
 
 
 # Note The threshold depends also on the input volume set on the computer
-def _get_voice_onset(signal, threshold = 200, fs=44100, n_above=441):
+def _get_voice_onset(signal, threshold = 200, fs=44100, n_above_thresh=441):
     '''
     signal : numpy.ndarray
              signal in. Should be the envelope of the raw signal for accurate results
@@ -89,19 +91,20 @@ def _get_voice_onset(signal, threshold = 200, fs=44100, n_above=441):
     fs : int
          Sampling frequency
 
-    n_above : int
+    n_above_thresh : int
               Number of samples after the threshold is crossed used to calculate
               the median amplitude and decide if it was random burst of noise
               or speech onset.
     '''
+    
     indices_onset = np.where(signal >= threshold)[0] # All indices above threshold
     # Next, find the first index that where the MEDIAN stays above threshold for the next 10ms
     # Not using the MEAN because sensitive to a single extreme value
     # Note 44.1 points per millesconds (for fs=44100)
     # 10ms = 441 points
     for i in indices_onset:
-        # avg_10ms = np.array([abs(j) for j in signal[i:i+n_above]]).flatten().mean()
-        avg_10ms = np.median(np.array([abs(j) for j in signal[i:i+n_above]]).flatten())
+        # avg_10ms = np.array([abs(j) for j in signal[i:i+n_above_thresh]]).flatten().mean()
+        avg_10ms = np.median(np.array([abs(j) for j in signal[i:i+n_above_thresh]]).flatten())
         if avg_10ms >= threshold:
             idx_onset = i
             onset_time = idx_onset / float(fs) * 1000.0
@@ -129,26 +132,39 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
     return filtered_signal
 
 
-def auto_utterance_times(file_in):
+def auto_utterance_times(file_in, threshold=200, n_above_thresh=441):
     '''
     Automatically get utterance times.
     Returns idx and rt (ms)
+
+    file_in : str
+              Path to the audio file
+
+
+
+
+    threshold, n_above_thresh : see _get_voice_onset()
+
+    Returns
+    ---------
+    (idx, rt): tuple
+
     '''
     fs, signal = wav.read(file_in)
     flt_signal = FilterSignal(signal,fs=fs)
     env = _get_envelope(flt_signal,fs=fs)
-    idx, rt = _get_voice_onset(env,fs=fs)
+    idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, n_above_thresh=n_above_thresh)
 
     return idx, rt
 
 
 
-def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None):
+def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None, threshold=200, n_above_thresh=441):
     '''
     Automatically get utterance times. Returns list of indices and rts (ms).
     Option to output results to file.
 
-    dir_in : str
+    dir_in : str (directory)
             Directory containing .wav files
 
     output_txt : bool, optional
@@ -156,6 +172,15 @@ def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None):
 
     file_out : str
                Path to txt file output
+
+
+
+    threshold, n_above_thresh : see _get_voice_onset()
+
+    Returns
+    ---------
+    ([indices], [rts]): tuple
+
 
     '''
     if (output_txt == True) & (file_out==None):
@@ -170,7 +195,7 @@ def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None):
         fs, signal = wav.read(os.path.join(dir_in + '/'+ v))
         flt_signal = FilterSignal(signal,fs=fs)
         env = _get_envelope(flt_signal,fs=fs)
-        idx, rt = _get_voice_onset(env,fs=fs)
+        idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, n_above_thresh=n_above_thresh)
         rts_out.append(rt)
         idx_out.append(idx)
 
@@ -183,7 +208,7 @@ def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None):
 
 
 
-def plot_auto_utterance_times(dir_in, dir_out, fs=44100):
+def plot_auto_utterance_times(dir_in, dir_out, threshold=200, n_above_thresh=441):
     '''
     Plot automatically generated utterance times.
     '''
