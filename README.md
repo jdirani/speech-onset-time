@@ -1,4 +1,4 @@
-# Speech onset detection toolkit
+# Speech-Onset Detection Toolkit
 This toolkit was developed in order to easily detect the onset of speech in voice recordings for psychology experiments.
 
 ## Record speech
