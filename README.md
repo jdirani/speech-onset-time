@@ -4,11 +4,11 @@
 signal = record_voice()
 
 
-## To detect utterance time (see EXAMPLE):
-        # 1) Read the wav using wav.read()
-        # 2) optionally LPF the wavs using FilterSignal()
-        # 3) _get_envelope()
-        # 4) _get_voice_onset()
+## Automarically detect utterance time:
+auto_utterance_times(): To return the onset time of a single .wav file
+auto_utterance_times_mult(): Takes a directory of .wav as input and returns speech onset time for all audio files.
+plot_auto_utterance_times(): Plot results of auto_utterance_times_mult() to monitor accuracy,
 
-        # NOTE: step (3) contains an LPF which is applied to the envelope. It
-        # is not applied to the signal, so not a duplicate of step (2)
+## Semi-automatic detecttion of utterance time:
+semi_auto_utterance_times(): Automatically detects utterance times and plots them, allowing to manually edit the predictions if needed.
+
