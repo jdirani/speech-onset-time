@@ -1,4 +1,3 @@
-# updating
 # Contains various signal processing functions
 
 # To detect utterance time (see EXAMPLE):
