@@ -1,6 +1,6 @@
 # Speech onset detection toolkit
 
-## Record speech and detect speech onset:
+## Record speech
 signal = record_voice()
 
 
