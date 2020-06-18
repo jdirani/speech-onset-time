@@ -10,7 +10,7 @@ signal = record_voice()
 **auto_utterance_times_mult():** Takes a directory of .wav as input and returns speech onset time for all audio files.<br>
 **plot_auto_utterance_times():** Plot results of auto_utterance_times_mult() to monitor accuracy,
 
-## Semi-automatic detecttion of utterance time:
+## Semi-automatic detection of utterance time:
 **semi_auto_utterance_times():** Automatically detects utterance times and plots them, allowing to manually edit the predictions if needed. <br>
 To edit prediction, double click on plot to move the vertical line. Press enter on terminal to go to the next plot.
 Figures are saved to file.
