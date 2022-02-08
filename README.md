@@ -14,5 +14,5 @@ Figures are saved to file.
 
 ## Example
     fs, signal = wav.read('path_in.wav')
-    idx, RT = auto_utterance_times(signa, fs)
-    plot_utterance_time(signal, fs,rt)
+    idx, rt = auto_utterance_times(signal, fs)
+    plot_utterance_time(signal, fs, rt)
