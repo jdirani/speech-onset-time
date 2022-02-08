@@ -7,8 +7,8 @@ signal = record_voice()
 
 ## Automatically detect utterance time:
 **auto_utterance_times():** To return the onset time of a single .wav file <br>
-**auto_utterance_times_mult():** Takes a directory of .wav as input and returns speech onset time for all audio files.<br>
-**plot_auto_utterance_times():** Plot results of auto_utterance_times_mult() to monitor accuracy,
+**auto_utterance_times_batch:** Takes list of paths (.wav) as input and returns speech onset time for all audio files. Option to plot the results<br>
+**plot_utterance_time():** Plot results to monitor accuracy.
 
 ## Semi-automatic detection of utterance time:
 **semi_auto_utterance_times():** Automatically detects utterance times and plots them, allowing to manually edit the predictions if needed. <br>
