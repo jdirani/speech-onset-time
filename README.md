@@ -1,10 +1,6 @@
 # Speech-Onset Detection Toolkit
 This toolkit was developed in order to easily detect the onset of speech in voice recordings for psychology experiments.
 
-## Record speech
-signal = record_voice()
-
-
 ## Automatically detect utterance time:
 **auto_utterance_times():** To return the onset time of a single .wav file <br>
 **auto_utterance_times_batch:** Takes list of paths (.wav) as input and returns speech onset time for all audio files. Option to plot the results<br>
@@ -16,4 +12,7 @@ To edit prediction, double click on plot to move the vertical line. Press enter 
 Figures are saved to file.
 
 
-
+## Example
+  fs, signal = wav.read('path_in.wav')
+  idx, RT = auto_utterance_times(signa, fs)
+  plot_utterance_time(signal, fs,rt)
