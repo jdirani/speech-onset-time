@@ -133,7 +133,8 @@ def auto_utterance_times(signal, fs, threshold=200, time_above_thresh=100):
 
     Returns
     ---------
-    (idx, rt): tuple
+    idx : index of utterance time
+    rt : in milliseconds
 
     '''
     flt_signal = FilterSignal(signal,fs=fs)
