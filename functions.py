@@ -207,7 +207,7 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
     idx_out = []
 
     for v in tqdm(wav_paths):
-        fs, signal = wav.read(os.path.join(dir_in, v))
+        fs, signal = wav.read(v)
         flt_signal = FilterSignal(signal,fs=fs)
         env = _get_envelope(flt_signal,fs=fs)
         idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, time_above_thresh=time_above_thresh)
