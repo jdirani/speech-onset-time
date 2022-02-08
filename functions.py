@@ -1,12 +1,11 @@
 import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
-from matplotlib import pyplot as plt
 import numpy, os, csv
-from scipy.signal import butter, filtfilt
 import matplotlib.pyplot as plt
-
-
+from matplotlib import pyplot as plt
+from scipy.signal import butter, filtfilt
+from tqdm import tqdm
 
 def record_voice(out_name=None, channels=1, fs=44100, duration=2, dtype='float64'):
     '''
@@ -121,13 +120,14 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
     return filtered_signal
 
 
-def auto_utterance_times(file_in, threshold=200, time_above_thresh=100):
+
+def auto_utterance_times(signal, fs, threshold=200, time_above_thresh=100):
     '''
     Automatically get utterance times.
     Returns idx and rt (ms)
 
-    file_in : str
-              Path to the audio file
+    signal, fs : np.array, int
+                 fs, signal = wav.read(file_in)
 
     threshold, time_above_thresh : see _get_voice_onset()
 
@@ -136,7 +136,6 @@ def auto_utterance_times(file_in, threshold=200, time_above_thresh=100):
     (idx, rt): tuple
 
     '''
-    fs, signal = wav.read(file_in)
     flt_signal = FilterSignal(signal,fs=fs)
     env = _get_envelope(flt_signal,fs=fs)
     idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, time_above_thresh=time_above_thresh)
@@ -144,40 +143,69 @@ def auto_utterance_times(file_in, threshold=200, time_above_thresh=100):
     return idx, rt
 
 
+def plot_utterance_time(signal, fs, rt, title=None, show=True, savefig=None):
+    '''
+    signal, fs : np.array, int
+                 fs, signal = wav.read(file_in)
 
-def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None, threshold=200, time_above_thresh=100):
+    rt : float
+         rt in milliseconds
+
+    show : bool
+           Toggle show figure
+
+    savefig : None, str
+              Path to save figure. If None, figure is not saved
+    '''
+
+    # Creating X axis, in miliiseconds
+    N_samples = len(signal)
+    len_signal_ms = len(signal)/fs*1000
+    times = np.arange(0,len_signal_ms,1.0/fs*1000)
+
+    #plotting
+    fig, ax = plt.subplots(figsize=((18,5)))
+    ax.plot(times, signal, color='b')
+    ax.axvline(rt, color='r')
+    ax.set_title(title)
+
+    if savefig:
+        plt.savefig(savefig)
+
+    if show:
+        plt.show()
+
+    return fig, ax
+
+
+
+def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, threshold=200, time_above_thresh=100):
     '''
     Automatically get utterance times. Returns list of indices and rts (ms).
     Option to output results to file.
 
-    dir_in : str (directory)
-            Directory containing .wav files
-
-    output_txt : bool, optional
-                 Whether to output results to txt file
-
-    file_out : str
-               Path to txt file output
-
-
+    wav_paths : list paths to .wav files
 
     threshold, time_above_thresh : see _get_voice_onset()
 
+    output_txt : None, str
+                 Path to txt file output
+
+    plots_dir : None, str
+                Directory to plot waveform and utterance times. If none, no plotting done.
+
     Returns
     ---------
-    ([indices], [rts]): tuple
-
+    indices : indices of utterance times
+    rts : in milliseconds
 
     '''
-    if (output_txt == True) & (file_out==None):
-        raise TypeError('file_out must be specified (str) if output_txt=True')
 
 
-    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     rts_out = []
     idx_out = []
 
-    for v in voices:
+    for v in tqdm(wav_paths):
         fs, signal = wav.read(os.path.join(dir_in, v))
         flt_signal = FilterSignal(signal,fs=fs)
         env = _get_envelope(flt_signal,fs=fs)
@@ -185,46 +213,20 @@ def auto_utterance_times_mult(dir_in, output_txt=False, file_out=None, threshold
         rts_out.append(rt)
         idx_out.append(idx)
 
-    if output_txt == True:
-        f = open(file_out,'w')
+        if plots_dir:
+            title = os.path.basename(v).replace('.wav','')
+            fig_path = os.path.join(plots_dir, title+'.jpg')
+            plot_utterance_time(signal, fs, rt, title=title, show=False, savefig=fig_path)
+            plt.close()
+
+    if output_txt:
+        f = open(output_txt,'w')
         for r in rts_out:
             f.write('%s\n'%r)
         f.close()
+
     return idx_out, rts_out
 
-
-
-def plot_auto_utterance_times(dir_in, dir_out, threshold=200, time_above_thresh=100):
-    '''
-    Plot automatically generated utterance times. Saves plots to dir_out.
-
-    dir_in : str (directory)
-            Directory containing .wav files
-
-    dir_out : str (directory)
-            Output directory
-
-
-    '''
-    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
-
-    for v in voices:
-        fs, signal = wav.read(os.path.join(dir_in, v))
-        flt_signal = FilterSignal(signal,fs=fs)
-        env = _get_envelope(flt_signal,fs=fs)
-        idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, time_above_thresh=time_above_thresh)
-
-        # Creating X axis, in miliiseconds
-        N_samples = len(signal)
-        len_signal_ms = len(signal)/fs*1000
-        X_axis = np.arange(0,len_signal_ms,1.0/fs*1000)
-
-        #plotting
-        fig, ax = plt.subplots(figsize=((18,5)))
-        ax.plot(X_axis, signal, color='b')
-        ax.axvline(rt, color='r')
-        plt.savefig(os.path.join(dir_out, v[:-4] + '.jpg'))
-        plt.close()
 
 
 
@@ -302,82 +304,3 @@ def semi_auto_utterance_times(dir_in, dir_out):
         plt.close()
 
     return rts_out
-
-
-# Other:
-# # Returns a dict with trialID (defined in .wav filename: trialID_trialName.wav. e.g. 1_banana.wav), target, and rt
-# def semi_auto_utterance_times_PorthalFormat(dir_in, dir_out, fs=44100):
-#     '''
-#     Returns list of RTs and csv with RTs and trial info, and saves plots to dir_out.
-#     '''
-#     plt.ion()
-#     def onpick(event):
-#         if event.dblclick:
-#             # manual_rts.append((event.xdata, event.xdata/fs)) #manual_rts is a variable defined in below semi_auto_utterance_times. Not the best way to write this.
-#             manual_rts.append(event.xdata) # removing index value (see above), since now index is the final milliseconds value.
-#             L =  ax.axvline(x=event.xdata, color='orange')
-#             fig.canvas.draw()
-#         elif event.button == 3:
-#             plt.close()
-#             fig.canvas.mpl_disconnect(cid)
-#             return
-#
-#     voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
-#     trials_rts = []
-#
-#     nb = 0 #keep count
-#     for v in voices:
-#         nb+=1
-#         print('#%s'%nb, v)
-#         # auto fetch RT
-#         signal = wav.read(os.path.join(dir_in, v))[1]
-#         flt_signal = FilterSignal(signal)
-#         env = _get_envelope(flt_signal)
-#         rt_auto = _get_voice_onset(env) #rt_auto (idx,rt)
-#         print("rt auto ", rt_auto)
-#
-#         # Creating X axis, in miliiseconds
-#         N_samples = len(signal)
-#         len_signal_ms = len(signal)/fs*1000
-#         X_axis = np.arange(0,len_signal_ms,1.0/fs*1000)
-#
-#         # plot and fix rt
-#         manual_rts = [] # DEFINED HERE manual_rts
-#         fig, ax = plt.subplots(figsize=((18,5)))
-#         plt.title(v)
-#         ax.plot(X_axis, signal, color='b')
-#         if rt_auto:
-#             ax.axvline(rt_auto[1], color='r')
-#         cid = fig.canvas.mpl_connect('button_press_event', onpick)
-#         input('press enter to continue...') #pauses to wait for cid to finish
-#
-#         # print("rt manual ", rt_manual)
-#         # print("manual_rts (%s)"%len(manual_rts), manual_rts)
-#
-#         if len(manual_rts) > 0:
-#             # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
-#             rt = manual_rts[-1]
-#         else:
-#             rt = rt_auto[1] #convert to milliseconds
-#
-#         print('final rt ', rt)
-#         print('--------------------')
-#
-#
-#         if not os.path.isdir(os.path.join(dir_out, 'rts')):
-#             os.makedirs(os.path.join(dir_out, 'rts'))
-#
-#         plt.savefig(os.path.join(dir_out,'rts', (v[:-4]+'.jpg')))
-#         plt.close()
-#
-#         trialID = v.split('_')[0]
-#         target = v.split('_')[1][:-4]
-#         trials_rts.append({'target':target,'trialID':trialID,'rt':rt})
-#
-#         with open(os.path.join(dir_out,'rts','RT_out.csv'), 'w') as f:
-#             w = csv.DictWriter(f, fieldnames=['trialID', 'target','rt'])
-#             w.writeheader()
-#             w.writerows(trials_rts)
-#
-#
-#     return trials_rts
