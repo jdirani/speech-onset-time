@@ -11,13 +11,9 @@ def record_voice(out_name=None, channels=1, fs=44100, duration=2, dtype='float64
     '''
     out_name : str (directory)
                If not None, writes to file.
-
     channels: 1 for mono, 2 for stereo
-
     duration : In seconds
-
     dtype : 'int16' for 16 bit, float64 for 32 bit rate.
-
     fs : int
          Sampling frequency
     '''
@@ -34,11 +30,8 @@ def record_voice(out_name=None, channels=1, fs=44100, duration=2, dtype='float64
 def _get_envelope(signal, fs=44100, N=200, cutoff=2000):
     '''
     signal: input wav (numpy.ndarray)
-
     fs: sampling frequency
-
     N: number of samples per chunk (in part (2))
-
     cutoff: LPF cutoff, the smaller the cuttoff the stronger the filter. (tweek this).
     '''
     # 1) Take the absolute value of the signal
@@ -65,25 +58,22 @@ def _get_envelope(signal, fs=44100, N=200, cutoff=2000):
 
 
 # Note The threshold depends also on the input volume set on the computer
-def _get_voice_onset(signal, threshold = 200, fs=44100, time_above_thresh=100):
+def _get_voice_onset(signal, threshold = 200, fs=44100, min_time=100):
     '''
     signal : numpy.ndarray
              signal in. Should be the envelope of the raw signal for accurate results
-
     threshold : int
                 Amplitude threshold for voice onset.
                 (Threshold = 200 with NYUAD MEG mic at 75% input volume seems to work well)
-
     fs : int
          Sampling frequency
-
-    tim_above_thresh : int (ms)
+    min_time : int (ms)
              Time in ms after the threshold is crossed used to calculate
               the median amplitude and decide if it was random burst of noise
               or speech onset.
     '''
 
-    n_above_thresh = int(fs/time_above_thresh) # convert time above threshold to number of samples.
+    n_above_thresh = int(fs/min_time) # convert time above threshold to number of samples.
 
     indices_onset = np.where(signal >= threshold)[0] # All indices above threshold
     # Next, find the first index that where the MEDIAN stays above threshold for the next 10ms
@@ -91,9 +81,8 @@ def _get_voice_onset(signal, threshold = 200, fs=44100, time_above_thresh=100):
     # Note 44.1 points per millesconds (for fs=44100)
     # 10ms = 441 points
     for i in indices_onset:
-        # avg_10ms = np.array([abs(j) for j in signal[i:i+n_above_thresh]]).flatten().mean()
-        avg_10ms = np.median(np.array([abs(j) for j in signal[i:i+n_above_thresh]]).flatten())
-        if avg_10ms >= threshold:
+        median_mintime = np.median(np.abs(signal[i:i+n_above_thresh])) # median value in the timewindow of length min_time
+        if median_mintime >= threshold:
             idx_onset = i
             onset_time = idx_onset / float(fs) * 1000.0
 
@@ -108,10 +97,8 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
     '''
     signal_in : numpy.ndarray
                 Input .wav signal
-
     fs : int
          Sampling frequency
-
     cutoff : int
              LPF cutoff (200 works well with NYUAD MEG mic)
     '''
@@ -121,25 +108,21 @@ def FilterSignal(signal_in, fs=44100, cutoff=200):
 
 
 
-def auto_utterance_times(signal, fs, threshold=200, time_above_thresh=100):
+def auto_utterance_times(signal, fs, threshold=200, min_time=100):
     '''
     Automatically get utterance times.
     Returns idx and rt (ms)
-
     signal, fs : np.array, int
                  fs, signal = wav.read(file_in)
-
-    threshold, time_above_thresh : see _get_voice_onset()
-
+    threshold, min_time : see _get_voice_onset()
     Returns
     ---------
     idx : index of utterance time
     rt : in milliseconds
-
     '''
     flt_signal = FilterSignal(signal,fs=fs)
     env = _get_envelope(flt_signal,fs=fs)
-    idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, time_above_thresh=time_above_thresh)
+    idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, min_time=min_time)
 
     return idx, rt
 
@@ -148,13 +131,10 @@ def plot_utterance_time(signal, fs, rt, title=None, show=True, savefig=None):
     '''
     signal, fs : np.array, int
                  fs, signal = wav.read(file_in)
-
     rt : float
          rt in milliseconds
-
     show : bool
            Toggle show figure
-
     savefig : None, str
               Path to save figure. If None, figure is not saved
     '''
@@ -180,26 +160,21 @@ def plot_utterance_time(signal, fs, rt, title=None, show=True, savefig=None):
 
 
 
-def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, threshold=200, time_above_thresh=100):
+def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, threshold=200, min_time=100):
     '''
     Automatically get utterance times. Returns list of indices and rts (ms).
     Option to output results to file.
 
     wav_paths : list paths to .wav files
-
-    threshold, time_above_thresh : see _get_voice_onset()
-
+    threshold, min_time : see _get_voice_onset()
     output_txt : None, str
                  Path to txt file output
-
     plots_dir : None, str
                 Directory to plot waveform and utterance times. If none, no plotting done.
-
     Returns
     ---------
     indices : indices of utterance times
     rts : in milliseconds
-
     '''
 
 
@@ -210,7 +185,7 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
         fs, signal = wav.read(v)
         flt_signal = FilterSignal(signal,fs=fs)
         env = _get_envelope(flt_signal,fs=fs)
-        idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, time_above_thresh=time_above_thresh)
+        idx, rt = _get_voice_onset(env,fs=fs, threshold=threshold, min_time=min_time)
         rts_out.append(rt)
         idx_out.append(idx)
 
@@ -233,19 +208,13 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
 
 def semi_auto_utterance_times(dir_in, dir_out):
     '''
-
     Automatically detects utterance times and plots them, allowing to manually edit the prediction.
     To edit prediction, double click on plot to move the vertical line. Press enter on terminal to go to the next plot.
     Figures are saved to file.
-
-
     dir_in : str (directory)
             Directory containing .wav files
-
     dir_out : str (directory)
             Output directory
-
-
     '''
 
     plt.ion()
