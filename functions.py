@@ -206,11 +206,12 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
 
 
 
-def semi_auto_utterance_times(dir_in, dir_out):
+def semi_auto_utterance_times(wav_paths, dir_out, threshold=200, min_time=100):
     '''
     Automatically detects utterance times and plots them, allowing to manually edit the prediction.
     To edit prediction, double click on plot to move the vertical line. Press enter on terminal to go to the next plot.
     Figures are saved to file.
+
     dir_in : str (directory)
             Directory containing .wav files
     dir_out : str (directory)
@@ -228,18 +229,17 @@ def semi_auto_utterance_times(dir_in, dir_out):
             fig.canvas.mpl_disconnect(cid)
             return
 
-    voices = [i for i in os.listdir(dir_in) if i.endswith('.wav')]
     rts_out = []
 
     nb = 0 #keep count
-    for v in voices:
+    for v in wav_paths:
         nb+=1
         print('#%s'%nb, v)
         # auto fetch RT
-        fs, signal = wav.read(os.path.join(dir_in, v))
+        fs, signal = wav.read(v)
         flt_signal = FilterSignal(signal)
         env = _get_envelope(flt_signal)
-        rt_auto = _get_voice_onset(env) #rt_auto (idx,rt)
+        rt_auto = _get_voice_onset(env, threshold=threshold, min_time=min_time)
         print("rt auto ", rt_auto)
 
         # Creating X axis, in miliiseconds
@@ -257,9 +257,6 @@ def semi_auto_utterance_times(dir_in, dir_out):
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
         input('press enter to continue...') #pauses to wait for cid to finish
 
-        # print("rt manual ", rt_manual)
-        # print("manual_rts (%s)"%len(manual_rts), manual_rts)
-
         if len(manual_rts) > 0:
             # rt = (manual_rts[-1][0], manual_rts[-1][1]*1000) #Keep idx as is, convert rt to milliseconds. commented out because idx=milliseconds now.
             rt = manual_rts[-1]
@@ -270,7 +267,8 @@ def semi_auto_utterance_times(dir_in, dir_out):
         print('--------------------')
         rts_out.append(rt)
 
-        plt.savefig(os.path.join(dir_out, v[:-4] + '.jpg'))
+        fig_outpath = dir_out + os.path.basename(v).replace('.wav','.jpg')
+        plt.savefig(fig_outpath)
         plt.close()
 
     return rts_out
