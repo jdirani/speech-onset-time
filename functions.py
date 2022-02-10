@@ -166,9 +166,12 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
     Option to output results to file.
 
     wav_paths : list paths to .wav files
+
     threshold, min_time : see _get_voice_onset()
+
     output_txt : None, str
                  Path to txt file output
+
     plots_dir : None, str
                 Directory to plot waveform and utterance times. If none, no plotting done.
     Returns
@@ -206,16 +209,25 @@ def auto_utterance_times_batch(wav_paths, output_txt=None, plots_dir=None, thres
 
 
 
-def semi_auto_utterance_times(wav_paths, dir_out, threshold=200, min_time=100):
+def semi_auto_utterance_times(wav_paths, dir_out, threshold=200, min_time=100, plot_filtered=True):
     '''
     Automatically detects utterance times and plots them, allowing to manually edit the prediction.
     To edit prediction, double click on plot to move the vertical line. Press enter on terminal to go to the next plot.
     Figures are saved to file.
 
-    dir_in : str (directory)
-            Directory containing .wav files
+    wav_paths : list paths to .wav files
+
     dir_out : str (directory)
             Output directory
+
+    threshold, min_time : see _get_voice_onset()
+
+    plot_filtered : bool, if true plots filtered signal, else plots the raw signal
+
+    Returns
+    ---------
+    rts : in milliseconds
+
     '''
 
     plt.ion()
@@ -251,7 +263,12 @@ def semi_auto_utterance_times(wav_paths, dir_out, threshold=200, min_time=100):
         manual_rts = [] # DEFINED HERE manual_rts
         fig, ax = plt.subplots(figsize=((18,5)))
         plt.title(v)
-        ax.plot(X_axis, signal, color='b')
+
+        if plot_filtered:
+            ax.plot(X_axis, flt_signal, color='b')
+        else:
+            ax.plot(X_axis, signal, color='b')
+
         if rt_auto:
             ax.axvline(rt_auto[1], color='r')
         cid = fig.canvas.mpl_connect('button_press_event', onpick)
